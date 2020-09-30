@@ -1,0 +1,35 @@
+{
+  "name": "github_users_by_country",
+  "version": "1.0.0",
+  "description": "get github users by country",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "@gkpty",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.20.0",
+    "dotenv": "^8.2.0"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gkpty/gh_users_by_country.git"
+  },
+  "keywords": [
+    "github",
+    "users",
+    "twitter",
+    "mass",
+    "mail",
+    "bot"
+  ],
+  "bugs": {
+    "url": "https://github.com/gkpty/gh_users_by_country/issues"
+  },
+  "homepage": "https://github.com/gkpty/gh_users_by_country#readme"
+}
