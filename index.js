@@ -5,9 +5,11 @@ const fs = require('fs')
 //get the list of users by country
 async function getUsers(country){
   let arr = new Array
+  let obj = fs.existsSync('./users.json')? JSON.parse(fs.readFileSync('./users.json', 'utf8')): new Object
   let res = await axios.get(`https://api.github.com/search/users?q=location:${country}`)
-  if(!process.argv[3]) process.argv[3] = 1
-  let limit = process.argv[3]+3
+  console.log(parseInt(process.argv[3]))
+  process.argv[3] = process.argv[3]? parseInt(process.argv[3]): 1
+  let limit = process.argv[3]+10
   if(limit >= res.data.total_count/30) limit = res.data.total_count
   for(let x = process.argv[3]; x < limit; x++){
     let response = await axios.get(`https://api.github.com/search/users?q=location:${country}&page=${x}`, {
@@ -17,7 +19,7 @@ async function getUsers(country){
       }
     }).catch(err=> console.log(err))
     let users = response.data.items
-    console.log(users)
+    //console.log(users)
     for(let i in users){
       axios.get(`https://api.github.com/users/${users[i].login}`, {
         headers: {
@@ -27,6 +29,9 @@ async function getUsers(country){
       })
       .then(u => {
         let user = new Object
+        let ghid = 'gh'+u.data.id
+        user.source = 'github'
+        user.id = u.data.id
         user.username = u.data.login
         user.name = u.data.name
         user.company = u.data.company
@@ -35,12 +40,13 @@ async function getUsers(country){
         user.public_repos = u.data.public_repos
         user.created_at = u.data.created_at
         console.log(user)
-        arr.push(user)
-        console.log(i, x, limit)
+        obj[ghid] = user
+        //arr.push(user)
+        //console.log(i, x, limit)
         if(i >= 29 && x >= limit-1) {
           console.log('done!')
-          fs.writeFileSync('./users.json', JSON.stringify(arr))
-          return arr
+          fs.writeFileSync('./users.json', JSON.stringify(obj))
+          return obj
         }
       }).catch(err=>{console.log(err)})
     }
@@ -50,23 +56,24 @@ async function getUsers(country){
 //convert the json to csv
 function jsonToCsv(){
   let file = fs.readFileSync('./users.json', 'utf8')
-  let arr = JSON.parse(file)
+  let obj = JSON.parse(file)
   let csv = new String
   let header = new Array
-  for(let key in arr[0]){
+  for(let key in obj[Object.keys(obj)[0]]){
     header.push(key)
     csv += key+', '
-  } 
+  }
+  //console.log(csv) 
   csv += '\n'
-  for(let user of arr){
-    for(let x=0; x<header.length; x++) csv += `"${user[header[x]]}", `
+  for(let u in obj){
+    for(let x=0; x<header.length; x++) csv += `"${obj[u][header[x]]}", `
     csv += '\n'
   }
   fs.writeFileSync('./users.csv', csv)
 }
 
 //send mass mail to users with email
-function sendMassMail(source){
+async function sendMassMail(source){
   let user_arr = fs.readFileSync('users.json', 'utf8')
   let users = JSON.parse(user_arr)
   let mail_users = new Array
@@ -98,7 +105,7 @@ function sendMassMail(source){
     Destinations: []
   };
   ses.sendBulkTemplatedEmail(params).promise()
-  .then(()=> console.log('All Done!'))
+  .then(()=> console.log('All Done!')).catch(err=>console.log(err))
 }
 
 function twitterFollow(users){
