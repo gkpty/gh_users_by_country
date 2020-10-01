@@ -74,7 +74,6 @@ function jsonToCsv(){
 
 //send mass mail to users with email
 async function sendMassMail(source){
-
   let users = {
     lucas:{name:'lucas kardonski', email:'lucas@torus-digital.com'},
     gabriel:{name:'gabriel kardonski', email:'gkardonski@gmail.com'},

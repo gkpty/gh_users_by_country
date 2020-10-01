@@ -1,3 +1,7 @@
-const {sendMassMail} = require('../index')
+const sendMassMail = require('../lib/sendMassMail')
 
-sendMassMail(process.argv[2]).then(data => console.log(data)).catch(err=>console.log(err))
+try{
+  sendMassMail(process.argv[2])
+} catch(err){
+  console.log(err)
+}
