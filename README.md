@@ -24,6 +24,6 @@ optionally you can also save a csv file with the output data if you provide a se
 2. **saveCsv:** converts the users.json file into a csv and saves it as users.csv
 `node test/sendMassMail.js`
 3. **sendMassMail:** uses AWS SES to send a mass templated email to all the users with an email address. Your email address must have been confirmed with AWS SES.
-`node test/sendMassMail.js`
+`node test/sendMassMail.js EMAIL`
 4. **followTwitterUsers:** follows users in twitter if their twitter handle coincides with their github username
 `node test/followTwitterUsers.js START LIMIT`
