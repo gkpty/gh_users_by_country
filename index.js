@@ -74,10 +74,10 @@ function jsonToCsv(){
 
 //send mass mail to users with email
 async function sendMassMail(source){
-  let user_arr = fs.readFileSync('users.json', 'utf8')
-  let users = JSON.parse(user_arr)
+  let user_obj = fs.readFileSync('users.json', 'utf8')
+  let users = JSON.parse(user_obj)
   let mail_users = new Array
-  for(let u of users) if(u.email) mail_users.push(u)
+  for(let u in users) if(users[u].email) mail_users.push(users[u])
   let destinations = new Array
   for(let m of mail_users){
     destinations.push({
@@ -92,7 +92,7 @@ async function sendMassMail(source){
   let template = {
     TemplateName: "gh_users_by_country",
     SubjectPart: "Greetings, {{name}}!",
-    HtmlPart: "<h1>Hello {{name}},</h1><p>Your favorite animal is {{favoriteanimal}}.</p>",
+    HtmlPart: "<h1>Hola {{name}},</h1><br><p>Your favorite animal is {{favoriteanimal}}.</p>",
     TextPart: "Dear {{name}},\r\nYour favorite animal is {{favoriteanimal}}."
   }
   await ses.createTemplate(template).promise()
