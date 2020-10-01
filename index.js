@@ -74,15 +74,16 @@ function jsonToCsv(){
 
 //send mass mail to users with email
 async function sendMassMail(source){
-  //let user_arr = fs.readFileSync('users.json', 'utf8')
-  //let users = JSON.parse(user_arr)
+
   let users = {
     lucas:{name:'lucas kardonski', email:'lucas@torus-digital.com'},
     gabriel:{name:'gabriel kardonski', email:'gkardonski@gmail.com'},
     joespeh:{name:'lucas kardonski', email:'lucas.kardonski@gmail.com'}
   }
+  //let user_obj = fs.readFileSync('users.json', 'utf8')
+  //let users = JSON.parse(user_obj)
   let mail_users = new Array
-  for(let u in users) if(u.email) mail_users.push(u)
+  for(let u in users) if(users[u].email) mail_users.push(users[u])
   let destinations = new Array
   for(let m of mail_users){
     destinations.push({
