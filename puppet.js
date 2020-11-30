@@ -45,6 +45,7 @@ async function followUsers(start, limit){
   let followed = 0
   let users = JSON.parse(fs.readFileSync('./users.json', 'utf8'))
   //tweet date selector
+  console.log(`${Object.keys(users).length} total users`)
   try {
     const browser = await puppeteer.launch({ 
       executablePath: '/usr/bin/chromium-browser',
@@ -73,11 +74,11 @@ async function followUsers(start, limit){
           if(post1_d && post1_d.getTime() > latest_post_min || post2_d && post2_d.getTime() > latest_post_min){
             await page.click(follow_button);
             //console.log(last_post)
-            console.log('followed '+ users[ids[i]].username)
+            console.log(`\x1b[32mfollowed ${users[ids[i]].username}\x1b[0m`)
             followed+=1
-          } else console.log(`User ${users[ids[i]].username} hasnt posted anything in the last 3 months`)
-        } catch(err) {`User ${users[ids[i]].username} hasnt posted anything in the last 3 months`}
-      } catch (error) {console.log(`User ${users[ids[i]].username} doesnt exist in twitter or is already being followed`)}
+          } else console.log(`\x1b[33mUser ${users[ids[i]].username} hasnt posted anything in the past 3 months\x1b[0m`)
+        } catch(err) {`\x1b[33mUser ${users[ids[i]].username} hasnt posted anything\x1b[0m`}
+      } catch (error) {console.log(`\x1b[33mUser ${users[ids[i]].username} doesnt exist in twitter or is already being followed\x1b[0m`)}
     }
     await page.close();
     await browser.close();
