@@ -72,6 +72,24 @@ function jsonToCsv(){
   fs.writeFileSync('./users.csv', csv)
 }
 
+//convert csv to json
+function csvToJson(){
+  let file = fs.readFileSync('./steve_ml.csv', 'utf8')
+  let header = file.split('\n')[0]
+  let header_keys = header.split(', ')
+  let body = file.split('\n')
+  let obj = {}
+  for(let i=1; i<body.length-1; i++){
+    let elems = body[i].split('", ')
+    let id = elems[0].substr(1,elems[0].length-1)+elems[1].substr(1,elems[1].length-1)
+    obj[id]={}
+    for(let x=0; x<elems.length-1; x++){
+      obj[id][header_keys[x]]=elems[x].substr(1,elems[x].length-1)
+    }
+  }
+  fs.writeFileSync('./testusers1.json', JSON.stringify(obj))
+}
+
 //send mass mail to users with email
 async function sendMassMail(source){
   let users = {
@@ -135,6 +153,7 @@ function twitterFollow(users){
 module.exports = {
   getUsers,
   jsonToCsv,
+  csvToJson,
   sendMassMail,
   twitterFollow
 }
