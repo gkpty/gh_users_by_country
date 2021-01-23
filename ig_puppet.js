@@ -113,19 +113,22 @@ async function getFollowing(username){
         console.log('done clicking button')
         await page.waitForSelector('a.FPmhX', {timeout: 1000})
         await autoScroll(page);
-        let users = await page.evaluate(() => {
-          let arr = new Array
-          let users = document.querySelectorAll('a.FPmhX')
-          for(let u of users) arr.push(u.text)
-          console.log(arr)
-          return arr
+        let followers = await getFollowers(page)
+        
+        let queue = JSON.parse(fs.readFileSync('following_queue.json', 'utf8'))
+        console.log(queue)
+        console.log('Followers ',followers)
+        let current_date = new Date()
+        await followers.map(async user => {
+          if(!queue[user]) queue[user] = {username:user, followed_date:'', queued_date:current_date.toString()}
         })
-        console.log(users)
+        console.log('NEW QUEUE', queue)
+        fs.writeFileSync('following_queue.json', JSON.stringify(queue))
       } catch(err) {console.log(err)}
     } catch (error) {console.log(`\x1b[33mUser ${users[ids[i]].username} doesnt exist in instagram or is already being followed\x1b[0m`)}
-   /*  await page.close();
+    await page.close();
     await browser.close();
-    return `\x1b[32mDone! followed ${username}` */
+    return `\x1b[32mDone! followed ${username}`
   }
   catch (error) {
     console.log(error);
@@ -151,6 +154,29 @@ async function autoScroll(page){
       });
   });
 }
+
+async function getFollowers(page){
+  return await page.evaluate(async () => {
+    return  await new Promise((resolve, reject) => {
+        let arr = new Array()
+        let users = document.querySelectorAll('a.FPmhX')
+        console.log(users[0])
+        console.log('Test Loggg 1')
+        for(let u in users) {
+          arr.push(users[u].text)
+          if(u >= users.length-1){
+            console.log(JSON.stringify(arr))
+            console.log('Test Loggg 2')
+            resolve(arr)
+            return arr
+          }
+          
+        }
+        
+      });
+  });
+}
+
 
 
 
