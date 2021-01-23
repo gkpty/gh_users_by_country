@@ -84,6 +84,13 @@ async function followUser(username){
 //if not following follow user
 
 //Get User following list
+
+//open user profile
+//open list of people they are following
+//scroll to the bottom in order to display all of the people they follow
+//add each person into an array
+//retuyrn array
+
 async function getFollowing(username){
   try {
     const browser = await puppeteer.launch({ 
@@ -92,6 +99,7 @@ async function getFollowing(username){
       userDataDir: path.join(homePath, '~/.config/chromium')
     });
     const page = await browser.newPage();
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
     await page.setViewport({ width: 1199, height: 900 });
     let link = `https://instagram.com/${username}`;
     await page.goto(link);
@@ -104,11 +112,13 @@ async function getFollowing(username){
         })
         console.log('done clicking button')
         await page.waitForSelector('a.FPmhX', {timeout: 1000})
+        await autoScroll(page);
         let users = await page.evaluate(() => {
-          arr = new Array
-          users = document.querySelectorAll('a.FPmhX')
+          let arr = new Array
+          let users = document.querySelectorAll('a.FPmhX')
           for(let u of users) arr.push(u.text)
-          return users
+          console.log(arr)
+          return arr
         })
         console.log(users)
       } catch(err) {console.log(err)}
@@ -121,6 +131,25 @@ async function getFollowing(username){
     console.log(error);
     await browser.close();
   }
+}
+
+async function autoScroll(page){
+  await page.evaluate(async () => {
+      await new Promise((resolve, reject) => {
+          var totalHeight = 0;
+          var distance = 100;
+          let modal = document.getElementsByClassName('isgrP')[0]
+          var timer = setInterval(() => {
+              var scrollHeight = modal.scrollHeight;
+              modal.scrollBy(0, distance);
+              totalHeight += distance;
+              if(totalHeight >= scrollHeight){
+                  clearInterval(timer);
+                  resolve();
+              }
+          }, 100);
+      });
+  });
 }
 
 
