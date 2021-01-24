@@ -1,9 +1,9 @@
-const {getFollowing} = require('../ig_puppet')
+const {getUsers} = require('../ig_puppet')
 const fs = require('fs')
 
-getFollowing('panamarquit')
+getUsers('panamarquit', 'following')
 .then(data=> {
-  let json = JSON.parse(fs.readFileSync('following_queue.json', 'utf8'))
+  let json = JSON.parse(fs.readFileSync('queue.json', 'utf8'))
   console.log("length: ", Object.keys(json).length)
   console.log(data)
 })

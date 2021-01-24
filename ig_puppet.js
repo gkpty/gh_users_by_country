@@ -91,41 +91,30 @@ async function followUser(username){
 //add each person into an array
 //retuyrn array
 
-async function getFollowing(username){
+
+//adds users from a given profile with a given relation (following/followers) into a queue so they are fol lowed.
+async function getUsers(username, relation){
+  const browser = await puppeteer.launch({ 
+    executablePath: '/usr/bin/chromium-browser',
+    headless: false,
+    userDataDir: path.join(homePath, '~/.config/chromium')
+  });
   try {
-    const browser = await puppeteer.launch({ 
-      executablePath: '/usr/bin/chromium-browser',
-      headless: false,
-      userDataDir: path.join(homePath, '~/.config/chromium')
-    });
+    console.log('RELATION ',relation)
     const page = await browser.newPage();
     page.on('console', msg => console.log('PAGE LOG:', msg.text()));
     await page.setViewport({ width: 1199, height: 900 });
     let link = `https://instagram.com/${username}`;
     await page.goto(link);
-    try {
-      await page.waitForSelector('a.-nal3', {timeout: 1000})
-      try {
-        await page.evaluate(() => {
-          let button = document.querySelectorAll('a.-nal3')[1]
-          button.click()
-        })
-        console.log('done clicking button')
-        await page.waitForSelector('a.FPmhX', {timeout: 1000})
-        await autoScroll(page);
-        let followers = await getFollowers(page)
-        
-        let queue = JSON.parse(fs.readFileSync('following_queue.json', 'utf8'))
-        console.log(queue)
-        console.log('Followers ',followers)
-        let current_date = new Date()
-        await followers.map(async user => {
-          if(!queue[user]) queue[user] = {username:user, followed_date:'', queued_date:current_date.toString()}
-        })
-        console.log('NEW QUEUE', queue)
-        fs.writeFileSync('following_queue.json', JSON.stringify(queue))
-      } catch(err) {console.log(err)}
-    } catch (error) {console.log(`\x1b[33mUser ${users[ids[i]].username} doesnt exist in instagram or is already being followed\x1b[0m`)}
+    //execute fetch user
+    let followers = await fetchUsers(page, relation)
+    console.log(followers)
+    let queue = JSON.parse(fs.readFileSync('queue.json', 'utf8'))
+    await followers.map(async user => {
+      if(!queue[user]) queue[user] = {username:user, action:'follow', date_queued:current_date.toString()}
+    })
+    console.log('NEW QUEUE', queue)
+    fs.writeFileSync('queue.json', JSON.stringify(queue))
     await page.close();
     await browser.close();
     return `\x1b[32mDone! followed ${username}`
@@ -136,22 +125,94 @@ async function getFollowing(username){
   }
 }
 
+//fetches users either following or followers once inside the profile of a person
+async function fetchUsers(page, relation){
+  console.log('FEeatching Users')
+  console.log('REALIZATION' , relation)
+  try {
+    await page.waitForSelector('a.-nal3', {timeout: 1000})
+    try {
+      console.log('wairted for selector')
+      await page.evaluate(relation => {
+        console.log('REEELATION', relation)
+        let button = relation === 'following'? document.querySelectorAll('a.-nal3')[1]:document.querySelectorAll('a.-nal3')[0]
+        button.click()
+      }, relation)
+      console.log('done clicking button')
+      await page.waitForSelector('a.FPmhX', {timeout: 1000})
+      await autoScroll(page);
+      let followers = await getFollowers(page)
+      console.log('FOLLOWERS ', followers)
+      return followers
+    } catch(err) {console.log(err)}
+  } catch (error) {console.log(`\x1b[33mError`, error)}
+}
+
+async function getNotFollowingBack(username){
+  const browser = await puppeteer.launch({ 
+    executablePath: '/usr/bin/chromium-browser',
+    headless: false,
+    userDataDir: path.join(homePath, '~/.config/chromium')
+  });
+  try {
+    const page = await browser.newPage();
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    await page.setViewport({ width: 1199, height: 900 });
+    let link = `https://instagram.com/${username}`;
+    await page.goto(link);
+    //execute fetch user
+    let following = await fetchUsers(page, 'following')
+    console.log('AMOUNT FOLLOWING: ',following.length)
+    let followers = await fetchUsers(page, 'followers')
+    console.log('AMOUNT FOLLOWERS: ',followers.length)
+    let notFollowingBack = new Array()
+    await following.map(async followed=> {if(!followers.includes(followed)) notFollowingBack.push(followed)})
+    console.log('NOT FOLLOWING BACK', notFollowingBack)
+    fs.writeFileSync('not_following_back.json', JSON.stringify(notFollowingBack))
+    return 'hello'
+  }
+  catch (error) {
+    console.log(error);
+    await browser.close();
+  }
+}
+
 async function autoScroll(page){
-  await page.evaluate(async () => {
-      await new Promise((resolve, reject) => {
-          var totalHeight = 0;
-          var distance = 100;
-          let modal = document.getElementsByClassName('isgrP')[0]
-          var timer = setInterval(() => {
-              var scrollHeight = modal.scrollHeight;
-              modal.scrollBy(0, distance);
-              totalHeight += distance;
+  console.log('autOSCROlling')
+  return await page.evaluate(async () => {
+    return await new Promise((resolve, reject) => {
+      var recurse = function(modal, totalHeight=0){
+        console.log('hELoWorl')
+        var distance = 100;
+        let random = Math.floor(Math.random() * (500 - 200) ) + 200
+        var timer = setInterval(() => {
+          let scrollHeight = modal.scrollHeight;
+          console.log('Scrollheight ', scrollHeight)
+          modal.scrollBy(0, distance);
+          totalHeight += distance;
+          console.log(totalHeight)
+          if(totalHeight >= scrollHeight){
+            setTimeout(()=>{
+              scrollHeight = modal.scrollHeight;
               if(totalHeight >= scrollHeight){
-                  clearInterval(timer);
-                  resolve();
+                clearInterval(timer);
+                //close the modal
+                document.querySelectorAll('.wpO6b')[1].click()
+                resolve();
+                return true
               }
-          }, 100);
-      });
+              else {
+                console.log('ah snap')
+                recurse(modal, totalHeight)
+              }
+            },random)
+          }
+        }, 100);
+      }
+      let modal = document.getElementsByClassName('isgrP')[0]
+      console.log('MODALLL ', modal)
+      recurse(modal)
+    });
   });
 }
 
@@ -160,9 +221,10 @@ async function getFollowers(page){
     return  await new Promise((resolve, reject) => {
         let arr = new Array()
         let users = document.querySelectorAll('a.FPmhX')
-        console.log(users[0])
+        console.log('UserSSS ', users)
         console.log('Test Loggg 1')
         for(let u in users) {
+          console.log('UZER ',users[u].text)
           arr.push(users[u].text)
           if(u >= users.length-1){
             console.log(JSON.stringify(arr))
@@ -177,7 +239,9 @@ async function getFollowers(page){
   });
 }
 
-
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
 
 
 //Get User Followers
@@ -248,5 +312,6 @@ async function getFollowers(page){
 module.exports = {
   igLogin,
   followUser,
-  getFollowing
+  getNotFollowingBack,
+  getUsers
 }
